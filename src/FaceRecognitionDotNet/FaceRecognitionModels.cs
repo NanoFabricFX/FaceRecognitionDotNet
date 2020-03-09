@@ -24,6 +24,21 @@
             return "mmod_human_face_detector.dat";
         }
 
+        public static string GetPosePredictor194PointModelLocation()
+        {
+            return "helen-dataset.dat";
+        }
+
+        public static string GetAgeNetworkModelLocation()
+        {
+            return "adience-age-network.dat";
+        }
+
+        public static string GetGenderNetworkModelLocation()
+        {
+            return "utkface-gender-network.dat";
+        }
+
     }
 
 }

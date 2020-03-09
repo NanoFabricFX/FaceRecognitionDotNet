@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using DlibDotNet;
 
 namespace FaceRecognitionDotNet
@@ -7,7 +8,7 @@ namespace FaceRecognitionDotNet
     /// <summary>
     /// Represents a image data. This class cannot be inherited.
     /// </summary>
-    public sealed class Image : IDisposable
+    public sealed class Image : DisposableObject
     {
 
         #region Fields
@@ -37,19 +38,9 @@ namespace FaceRecognitionDotNet
         {
             get
             {
-                if (this.IsDisposed)
-                    throw new ObjectDisposedException($"{nameof(Image)}");
+                this.ThrowIfDisposed();
                 return this._Matrix.Rows;
             }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this object has been disposed of.
-        /// </summary>
-        public bool IsDisposed
-        {
-            get;
-            private set;
         }
 
         internal MatrixBase Matrix => this._Matrix;
@@ -63,44 +54,56 @@ namespace FaceRecognitionDotNet
         {
             get
             {
-                if (this.IsDisposed)
-                    throw new ObjectDisposedException($"{nameof(Image)}");
+                this.ThrowIfDisposed();
                 return this._Matrix.Columns;
             }
         }
 
         #endregion
 
-        #region IDisposable Members
+        #region Methods
 
         /// <summary>
-        /// Releases all resources used by this <see cref="Image"/>.
+        /// Saves this <see cref="Image"/> to the specified file.
         /// </summary>
-        public void Dispose()
+        /// <param name="filename">A string that contains the name of the file to which to save this <see cref="Image"/>.</param>
+        /// <param name="format">The <see cref="ImageFormat"/> for this <see cref="Image"/>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="filename"/> is null.</exception>
+        public void Save(string filename, ImageFormat format)
         {
-            GC.SuppressFinalize(this);
-            this.Dispose(true);
+            if (filename == null) 
+                throw new ArgumentNullException(nameof(filename));
+
+            var directory = Path.GetDirectoryName(filename);
+            if (!Directory.Exists(directory) && !string.IsNullOrWhiteSpace(directory))
+                Directory.CreateDirectory(directory);
+
+            switch (format)
+            {
+                case ImageFormat.Bmp:
+                    DlibDotNet.Dlib.SaveBmp(this._Matrix, filename);
+                    break;
+                case ImageFormat.Jpeg:
+                    DlibDotNet.Dlib.SaveJpeg(this._Matrix, filename);
+                    break;
+                case ImageFormat.Png:
+                    DlibDotNet.Dlib.SavePng(this._Matrix, filename);
+                    break;
+            }
         }
+
+        #region Overrides 
 
         /// <summary>
-        /// Releases all resources used by this <see cref="Image"/>.
+        /// Releases all unmanaged resources.
         /// </summary>
-        /// <param name="disposing">Indicate value whether <see cref="IDisposable.Dispose"/> method was called.</param>
-        private void Dispose(bool disposing)
+        protected override void DisposeUnmanaged()
         {
-            if (this.IsDisposed)
-            {
-                return;
-            }
-
-            this.IsDisposed = true;
-
-            if (disposing)
-            {
-                this._Matrix?.Dispose();
-            }
-
+            base.DisposeUnmanaged();
+            this._Matrix?.Dispose();
         }
+
+        #endregion
 
         #endregion
 
